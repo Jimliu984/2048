@@ -3,7 +3,7 @@ import numpy as np
 import sys
 import random
 pygame.init()
-pygame.display.set_caption('Random Pattern')
+pygame.display.set_caption('2048')
 WIDTH = 800
 HEIGHT = 800
 Dim = 200
