@@ -101,7 +101,10 @@ def Move_Down(Game):
         Create_New_Tiles(Game)
 def Check_Game(Game):
     if 2048 in Game:
-        print("Win")
+        label = font_renderer2.render("You did it!", 1, (0, 0, 0))
+        screen.blit(label, (100,720))
+        label = font_renderer2.render("Keep Going!", 1, (0, 0, 0))
+        screen.blit(label, (100,760))
     Lose = 0
     for a in range(3):
         for b in range(3):
