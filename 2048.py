@@ -5,21 +5,28 @@ import random
 
 pygame.init()
 pygame.display.set_caption('2048')
-WIDTH = 720
+WIDTH = 680
 HEIGHT = 720
-Dim = 180
+Dim = 170
 screen = pygame.display.set_mode((WIDTH, HEIGHT + 80))
 ### Game in array
 pygame.font.init()
 default_font = pygame.font.get_default_font()
-font_renderer = pygame.font.Font(default_font, 80)
-font_renderer2 = pygame.font.Font(default_font, 35)
+font_renderer = pygame.font.Font(default_font, 65)
+font_renderer2 = pygame.font.Font(default_font, 34)
 # Colours of Tiles
 Colours = [(255, 229, 204), (255, 204, 153), (255, 175, 102), (250, 132, 132), (255, 81, 81), (255, 30, 30),
            (255, 255, 102),
            (250, 230, 90), (250, 220, 50), (250, 220, 0), (100, 250, 0), (50, 250, 0), (0, 200, 0), (0, 0, 250),
            (0, 0, 200), (0, 0, 100)]
 WHITE = pygame.Color(255, 255, 255)
+
+LEFT = 0
+RIGHT = 1
+UP = 2
+DOWN = 3
+
+score = 0
 
 
 def create_new_tiles(game):
@@ -34,92 +41,44 @@ def create_new_tiles(game):
     game[b][a] = random.randrange(2, 5, 2)
 
 
-def move_left(game):
+def move(game, direction):
+    global score
+
+    # transpose game array for up/down directions
+    if direction // 2 == 1:
+        game = np.transpose(game)
+    dir = (-1) ** direction
+
     game_copy = game.copy()
     for a in range(4):
-        row = game[a]
+        vec = game[a, :][::dir]
         for b in range(4):
             for c in range(b + 1, 4):
-                if row[b] == 0 and row[c] != 0:
-                    row[b] = row[c]
-                    row[c] = 0
+                if vec[b] == 0 and vec[c] != 0:
+                    vec[b] = vec[c]
+                    vec[c] = 0
         for x in range(3):
-            if row[x] == row[x + 1]:
-                row[x] = row[x] * 2
-                row[x + 1] = 0
-            elif row[x] == 0:
-                row[x] = row[x + 1]
-                row[x + 1] = 0
-    if np.array_equal(game_copy, game) == False:
-        create_new_tiles(game)
+            if vec[x] == vec[x + 1]:
+                vec[x] = vec[x] * 2
+                vec[x + 1] = 0
+                score += vec[x]
+            elif vec[x] == 0:
+                vec[x] = vec[x + 1]
+                vec[x + 1] = 0
 
-
-def move_right(game):
-    game_copy = game.copy()
-    for a in range(4):
-        row = game[a][::-1]
-        for b in range(4):
-            for c in range(b + 1, 4):
-                if row[b] == 0 and row[c] != 0:
-                    row[b] = row[c]
-                    row[c] = 0
-        for x in range(3):
-            if row[x] == row[x + 1]:
-                row[x] = row[x] * 2
-                row[x + 1] = 0
-            elif row[x] == 0:
-                row[x] = row[x + 1]
-                row[x + 1] = 0
-    if np.array_equal(game_copy, game) == False:
-        create_new_tiles(game)
-
-
-def move_up(game):
-    game_copy = game.copy()
-    for a in range(4):
-        Col = game[:, a]
-        for b in range(4):
-            for c in range(b + 1, 4):
-                if Col[b] == 0 and Col[c] != 0:
-                    Col[b] = Col[c]
-                    Col[c] = 0
-        for x in range(3):
-            if Col[x] == Col[x + 1]:
-                Col[x] = Col[x] * 2
-                Col[x + 1] = 0
-            elif Col[x] == 0:
-                Col[x] = Col[x + 1]
-                Col[x + 1] = 0
-    if np.array_equal(game_copy, game) == False:
-        create_new_tiles(game)
-
-
-def move_down(game):
-    game_copy = game.copy()
-    for a in range(4):
-        col = game[:, a][::-1]
-        for b in range(4):
-            for c in range(b + 1, 4):
-                if col[b] == 0 and col[c] != 0:
-                    col[b] = col[c]
-                    col[c] = 0
-        for x in range(3):
-            if col[x] == col[x + 1]:
-                col[x] = col[x] * 2
-                col[x + 1] = 0
-            elif col[x] == 0:
-                col[x] = col[x + 1]
-                col[x + 1] = 0
-    if np.array_equal(game_copy, game) == False:
+    if not np.array_equal(game_copy, game):
         create_new_tiles(game)
 
 
 def check_game(game):
     if 2048 in game:
+        pygame.draw.rect(screen, (185, 173, 161), (0, 680, 720, 120))
+        label = font_renderer2.render("Score: " + str(score), True, (50, 50, 50))
+        screen.blit(label, (10, 680))
         label = font_renderer2.render("You did it!", True, (0, 0, 0))
-        screen.blit(label, (100, 720))
+        screen.blit(label, (10, 715))
         label = font_renderer2.render("Keep Going!", True, (0, 0, 0))
-        screen.blit(label, (100, 760))
+        screen.blit(label, (10, 750))
     lose = 0
     for a in range(3):
         for b in range(3):
@@ -127,10 +86,13 @@ def check_game(game):
                 3, b + 1] and game[a, 3] != game[a + 1, 3]:
                 lose += 1
     if lose == 9:
+        pygame.draw.rect(screen, (185, 173, 161), (0, 680, 720, 120))
+        label = font_renderer2.render("Score: " + str(score), True, (50, 50, 50))
+        screen.blit(label, (10, 680))
         label = font_renderer2.render("Game Over!", True, (0, 0, 0))
-        screen.blit(label, (100, 720))
+        screen.blit(label, (10, 715))
         label = font_renderer2.render("Press Space to Restart", True, (0, 0, 0))
-        screen.blit(label, (100, 760))
+        screen.blit(label, (10, 750))
 
 
 def draw_game(game):
@@ -146,14 +108,21 @@ def draw_game(game):
                 label = font_renderer.render(str(game[a, b]), True, (0, 0, 0))
                 label_rect = label.get_rect(center=(b * Dim + shift + rect_size / 2, a * Dim + shift + rect_size / 2))
                 screen.blit(label, label_rect)
+    pygame.draw.rect(screen, (185, 173, 161), (0, 680, 680, 80))
+    label = font_renderer2.render("Score: " + str(score), True, (50, 50, 50))
+    screen.blit(label, (10, 680))
 
 
 def play_game():
+    global score
+    score = 0
+
     screen.fill((185, 173, 161))
     game = np.array([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
     create_new_tiles(game)
     create_new_tiles(game)
     draw_game(game)
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -162,13 +131,13 @@ def play_game():
                 if event.key == pygame.K_SPACE:
                     play_game()
                 if event.key == pygame.K_LEFT:
-                    move_left(game)
+                    move(game, LEFT)
                 elif event.key == pygame.K_RIGHT:
-                    move_right(game)
+                    move(game, RIGHT)
                 elif event.key == pygame.K_UP:
-                    move_up(game)
+                    move(game, UP)
                 elif event.key == pygame.K_DOWN:
-                    move_down(game)
+                    move(game, DOWN)
                 draw_game(game)
                 check_game(game)
         pygame.display.update()
